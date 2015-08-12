@@ -1,0 +1,100 @@
+<project name="SimpleProject">
+    <property name="build.dir" value="build"/>
+    <property name="build.prod.dir" value="${build.dir}/prod"/>
+    <property name="build.test.dir" value="${build.dir}/test"/>
+    <property name="build.jar.dir" value="${build.dir}/jar"/>
+    <property name="report" value="${build.dir}/test/report"/>
+    <property name="src.dir" value="src"/>
+    <property name="unit.test.dir" value="unit-test"/>
+    <property name="system.test.dir" value="system-test"/>
+    <property name="lib.dir" value="lib"/>
+    <path id="classpath">
+        <pathelement location="${build.prod.dir}"/>
+        <pathelement location="${build.test.dir}"/>
+        <fileset dir="${lib.dir}" includes="*.jar"/>
+    </path>
+
+    <target name="prepare">
+        <mkdir dir="${build.dir}"/>
+        <mkdir dir= "${build.dir}/prod"/>
+        <mkdir dir= "${build.dir}/test"/>
+        <mkdir dir= "${build.dir}/jar"/>
+        <mkdir dir= "${build.dir}/test/report"/>
+
+    </target>
+
+    <target name="compile" depends="prepare">
+    <javac srcdir="${src.dir}"
+           destdir="${build.prod.dir}" classpathref="classpath"/>
+   </target>
+
+    <target name="jar" depends="compile ,run-unit-tests">
+        <jar destfile="${build.jar.dir}/Encrypt.jar" basedir="${build.prod.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="com.develogical.crypto.Encrypt"/>
+            </manifest>
+        </jar>
+    </target>
+
+    <target name="run" depends="jar">
+        <java jar="${build.jar.dir}/Encrypt.jar" fork="true"/>
+    </target>
+
+    <target name="clean"       description="clean up">
+        <!-- Delete the ${build} and ${dist} directory trees -->
+        <delete dir="${build.dir}"/>
+
+    </target>
+
+    <target name="junit" depends="jar">
+        <junit printsummary="yes"
+             >
+            <classpath>
+                <path refid="classpath"/>
+
+            </classpath>
+
+            <batchtest fork="yes">
+                <fileset dir="${src.dir}" includes="*Test.java"/>
+            </batchtest>
+
+        </junit>
+        <fail message="Unit tests failed. Check log and/or reports."
+              if="test.failed"/>
+    </target>
+
+    <target name="compile-tests" >
+        <javac srcdir="${unit.test.dir}"
+               destdir="${build.test.dir}" classpathref="classpath"/>
+
+
+    </target>
+
+    <target name="run-unit-tests" depends="compile,compile-tests">
+        <junit printsummary="yes"   errorProperty="test.failed" failureProperty="test.failed">
+            <classpath refid="classpath"/>
+            <formatter type="xml"             usefile="true"/>
+            <batchtest fork="yes" todir="${report}">
+                <fileset dir="${build.test.dir}" includes="**/*Test.*"/>
+            </batchtest>
+
+
+        </junit>
+
+        <junitreport todir="${report}">
+            <fileset dir="${report}" includes="TEST-*.xml"/>
+            <report todir="${report}"/>
+        </junitreport>
+        <fail message="Unit tests failed. Check log and/or reports."
+              if="test.failed"/>
+
+    </target>
+
+
+</project>
+
+
+
+
+
+
